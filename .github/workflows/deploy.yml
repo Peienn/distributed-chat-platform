@@ -27,27 +27,26 @@ jobs:
       # Step 3: SSH 到 EC2 並部署
       - name: Deploy to EC2
         run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            # 設定專案目錄
-            PROJECT_DIR=/home/ubuntu/your-project
+          ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e
 
-            # 如果資料夾不存在，第一次 clone
+            # ✅ 用 ${{ github.repository }} 讓 Runner 展開
+            PROJECT_DIR=/home/ubuntu/${{ github.event.repository.name }}
+            echo "Project Name : $PROJECT_DIR"
+
             if [ ! -d "$PROJECT_DIR/.git" ]; then
               echo "Repo not found, cloning..."
-              git clone https://github.com/${GITHUB_REPOSITORY}.git $PROJECT_DIR
+              # ✅ public repo 不需要 token
+              git clone https://github.com/${{ github.repository }}.git $PROJECT_DIR
             fi
 
-            # 進入資料夾
+            ls 
+
             cd $PROJECT_DIR
 
-            # 更新程式碼
-            echo "Pulling latest code..."
+            ls
             git pull origin main
-
-            # Docker rebuild
-            echo "Rebuilding docker..."
-            docker compose down
-            docker compose up -d --build
-
+            docker-compose down
+            docker-compose up -d --build --scale backend=2
             echo "Deployment finished!"
           EOF
