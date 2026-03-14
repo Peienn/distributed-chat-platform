@@ -1,0 +1,53 @@
+# .github/workflows/deploy.yml
+name: EC2 Deploy Test
+
+# 觸發條件：每次 push 到 main 分支
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: 取得 repo code（Actions runner 自己用）
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      # Step 2: 設定 SSH
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      # Step 3: SSH 到 EC2 並部署
+      - name: Deploy to EC2
+        run: |
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            # 設定專案目錄
+            PROJECT_DIR=/home/ubuntu/your-project
+
+            # 如果資料夾不存在，第一次 clone
+            if [ ! -d "$PROJECT_DIR/.git" ]; then
+              echo "Repo not found, cloning..."
+              git clone https://github.com/${GITHUB_REPOSITORY}.git $PROJECT_DIR
+            fi
+
+            # 進入資料夾
+            cd $PROJECT_DIR
+
+            # 更新程式碼
+            echo "Pulling latest code..."
+            git pull origin main
+
+            # Docker rebuild
+            echo "Rebuilding docker..."
+            docker compose down
+            docker compose up -d --build
+
+            echo "Deployment finished!"
+          EOF
