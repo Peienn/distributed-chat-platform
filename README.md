@@ -47,4 +47,22 @@
 - Nginx安裝好後，只修改了/conf/nginx.conf即可，因此不把Nginx資料夾一起上拋
 
 
+---
 
+# 使用方法
+
+1. Download the repo
+   
+```
+git clone https://github.com/Peienn/distributed-chat-platform.git
+cd  distributed-chat-platform
+```
+
+2. Using docker compose to create these containere
+
+```bash
+docker-compose up -d --build --scale backend=2
+```
+
+3. Visit http://127.0.0.1 in your browser to access the chatroom.
+   
