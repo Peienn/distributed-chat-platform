@@ -8,9 +8,11 @@ RUN apt-get update && apt-get install -y \
  && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+
+# 安裝 requirements.txt 內的全部套件
+RUN pip install --no-cache-dir -r requirements.txt \
+    torch --index-url https://download.pytorch.org/whl/cpu
 
 COPY . .
 
-# 暫時改成測試檔
 CMD ["python", "test_redis.py"]
