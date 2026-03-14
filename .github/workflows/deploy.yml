@@ -44,7 +44,7 @@ jobs:
 
             cd $PROJECT_DIR
 
-            ls
+            
             git pull origin main
             docker-compose down
             docker-compose up -d --build --scale backend=2
