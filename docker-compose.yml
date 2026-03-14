@@ -37,9 +37,12 @@ services:
         context: ./Python_aiAnalysis
       container_name: python-analysis
       depends_on:
-        - backend
-        - my-redis
-        - my-postgres
+        backend:
+          condition: service_started    # backend 沒有 healthcheck，用 started 就好
+        my-redis:
+          condition: service_healthy    # ✅ 等 redis ready
+        my-postgres:
+          condition: service_healthy    # ✅ 等 postgres ready
       networks:
         - tech-showcase-net
       volumes:
@@ -59,8 +62,14 @@ services:
       POSTGRES_PASSWORD: chat_user
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # ✅ 加這行
     networks:
       - tech-showcase-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chat_user -d ChatRoom"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   my-redis:
     image: redis:latest
@@ -69,6 +78,11 @@ services:
       - "6379:6379"
     networks:
       - tech-showcase-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   # =========================
   #  Monitoring (新增)
