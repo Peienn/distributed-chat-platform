@@ -150,6 +150,4 @@ networks:
 volumes:
   prometheus-data:
   pgdata:
-    external: true
-
   grafana-data:

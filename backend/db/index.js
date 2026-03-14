@@ -3,7 +3,7 @@ const { Pool } = require('pg');
 
 // 自定義 config
 const config = require('../config');
-
+const initDB = require("./init");
 // ------------------------
 // Redis 客戶端
 // ------------------------
@@ -44,10 +44,18 @@ postgre.on('error', (err) => {
 });
 
 
+//  初始化 DB
+async function init() {
+  await initDB(postgre);
+}
+
+
 module.exports = {
   redis,
   redisSub,
   redisSession,
   postgre,
-  connectRedis
+  connectRedis,
+  init,
+  
 };
