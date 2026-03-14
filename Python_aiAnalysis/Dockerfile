@@ -9,9 +9,9 @@ RUN apt-get update && apt-get install -y \
 
 COPY requirements.txt .
 
-# 安裝 requirements.txt 內的全部套件
-RUN pip install --no-cache-dir -r requirements.txt \
-    torch --index-url https://download.pytorch.org/whl/cpu
+# 安裝 PyPI 套件 + CPU 版 torch
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 
 COPY . .
 
