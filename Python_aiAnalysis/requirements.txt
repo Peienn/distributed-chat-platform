@@ -6,7 +6,8 @@ python-socketio[client]>=5.11.0
 
 # AI/ML (根據你的需求調整版本)
 transformers>=4.35.0
-torch>=2.0.0
+torch==2.2.2+cpu
+
 
 # Database
 psycopg2-binary>=2.9.9
