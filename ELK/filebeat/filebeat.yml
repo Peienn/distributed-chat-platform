@@ -1,0 +1,21 @@
+filebeat.inputs:
+  - type: container
+    paths:
+      - /var/lib/docker/containers/*/*.log
+    processors:
+      - add_docker_metadata:
+          host: "unix:///var/run/docker.sock"
+      - decode_json_fields:
+          fields: ["message"]
+          target: "json"
+          overwrite_keys: true
+
+output.logstash:
+  hosts: ["logstash:5044"]
+  bulk_max_size: 10        # 每批最多送 10 筆
+  slow_start: true         # 慢慢增加送出量
+
+queue.mem:
+  events: 50               # 從 100 降到 50
+  flush.min_events: 5      # 從 10 降到 5
+  flush.timeout: 5s

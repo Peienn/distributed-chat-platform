@@ -18,7 +18,7 @@ services:
     working_dir: /app
     volumes:
       - ./backend:/app
-    command: sh -c "npm install && npm run dev"
+    command: sh -c "npm run dev"
     expose:
       - "3000"   # 只給內部（nginx）用
     depends_on:
@@ -62,7 +62,6 @@ services:
       POSTGRES_PASSWORD: chat_user
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # ✅ 加這行
     networks:
       - tech-showcase-net
     healthcheck:
@@ -156,6 +155,64 @@ services:
     networks:
       - tech-showcase-net
 
+  # ── ELK Stack ────────────────────────────
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    networks:
+      - tech-showcase-net
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.13.0
+    container_name: logstash
+    environment:
+      - LS_JAVA_OPTS=-Xms256m -Xmx256m
+    mem_limit: 512m
+    volumes:
+      - ./ELK/logstash/pipeline:/usr/share/logstash/pipeline
+    networks:
+      - tech-showcase-net
+    ports:
+      - "5044:5044"
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.13.0
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    networks:
+      - tech-showcase-net
+    depends_on:
+      - elasticsearch
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.13.0
+    container_name: filebeat
+    user: root
+    volumes:
+      - ./ELK/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      # 掛載 Docker socket 讀取所有 container logs
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - logstash
+    networks:
+      - tech-showcase-net
+
+
+
 
 networks:
   tech-showcase-net:
@@ -165,3 +222,4 @@ volumes:
   prometheus-data:
   pgdata:
   grafana-data:
+  esdata:
